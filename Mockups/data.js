@@ -45,6 +45,7 @@ const COLOURS = [
   { id: "red", name: "Red", hex: "#b8322a", price: 20 },
   { id: "orange", name: "Orange", hex: "#e8701a", price: 20 },
   { id: "blue", name: "Royal Blue", hex: "#2455b8", price: 20 },
+  { id: "sky", name: "Sky Blue", hex: "#6cb4ee", price: 20 },
   { id: "cyan", name: "Cyan", hex: "#1fb5c9", price: 20 },
   { id: "yellow", name: "Yellow", hex: "#e8c42a", price: 20 },
   { id: "green", name: "Green", hex: "#2f8a4a", price: 20 },
