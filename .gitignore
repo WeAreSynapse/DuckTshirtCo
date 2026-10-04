@@ -1,0 +1,10 @@
+# Conversation data and session-logging runtime files: never commit these.
+_transcript/
+_sessions/*.db
+_sessions/*.db-*
+_sessions/inbox/
+_sessions/ingested/
+_sessions/_test*/
+_sessions/*.log
+_sessions/__pycache__/
+Mockups/.claude/settings.local.json
