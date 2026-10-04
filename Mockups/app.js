@@ -6,7 +6,7 @@
 // place = { x, y (offset from print-area centre, as a fraction of its size), s (width, fraction of print area), r (degrees) }
 const draftDefaults = () => ({
   path: null,      // "catalog" | "upload": how they started (sets the step order)
-  tee: null,
+  tee: "crew",   // preselected: it is the only style for now, so Continue is enabled straight away
   colour: null,
   size: null,
   qty: 1,
@@ -37,6 +37,42 @@ const go = route => { location.hash = "#/" + route; };
 const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(p => p[1]);
 const CAROUSEL = [...DESIGNS.filter(d => d.featured), ...shuffle(DESIGNS.filter(d => !d.featured))];
 const carHex = i => COLOURS.find(c => c.id === CAROUSEL[i].showOn).hex; // tee colour that suits each design
+const hexOf = d => COLOURS.find(c => c.id === d.showOn).hex;
+
+// The carousel has its own list so a pill can change it without touching the shop grid.
+// No pill = the default order above. One pill at a time; tapping the active one clears it.
+const pillList = {
+  hot: () => [...DESIGNS].sort((a, b) => b.sold30 - a.sold30), // never capped: every design, best sellers first
+  fresh: () => [...DESIGNS].sort((a, b) => b.added.localeCompare(a.added)),
+  uploaded: () => DESIGNS.filter(d => d.uploader),
+};
+let carPill = null;
+let carList = CAROUSEL;
+const hotIds = new Set([...DESIGNS].sort((a, b) => b.sold30 - a.sold30).slice(0, HOT_BADGE_COUNT).map(d => d.id));
+const isHot = d => hotIds.has(d.id);
+const isNew = d => (Date.now() - new Date(d.added)) / 864e5 <= NEW_DESIGN_DAYS;
+// Comic-book "bang" starbursts drawn as SVG (original artwork, no licensed assets). The jagged outline is
+// generated once; every sticker reuses it, coloured by class, with a hard black offset shadow behind it.
+const BURST = (() => {
+  const n = 14, pts = [];
+  for (let i = 0; i < n * 2; i++) {
+    const a = Math.PI * i / n - Math.PI / 2;
+    const k = i % 2 ? 0.68 + 0.07 * Math.sin(i * 2.3) : 1 - 0.07 * Math.cos(i * 1.7); // slightly uneven, like hand-cut
+    pts.push(`${(100 + 98 * k * Math.cos(a)).toFixed(1)},${(60 + 57 * k * Math.sin(a)).toFixed(1)}`);
+  }
+  return pts.join(" ");
+})();
+const sticker = (cls, text) => `<span class="sticker ${cls}"><svg viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true"><polygon class="sh" points="${BURST}" transform="translate(6 7)"/><polygon class="fg" points="${BURST}"/></svg><b>${text}</b></span>`;
+const badgeOverlay = d => {
+  const b = (isHot(d) ? sticker("hot", "Hot Seller!") : "") +
+            (isNew(d) ? sticker("new", "New Design") : "") +
+            (d.uploader ? sticker("user", "User Designs") : "");
+  return b ? `<span class="ov">${b}</span>` : "";
+};
+const pillEmpty = id => pillList[id]().length === 0;
+const carMeta = d => `Design: ${d.tags} · from ${money(fromPrice(d.price))}` +
+  (d.uploader ? ` · by ${d.uploader}` : "") +
+  (carPill === "hot" ? ` · ${d.sold30} sold in 30 days` : "");
 
 const LOGO = `<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="30" cy="42" rx="22" ry="14" fill="var(--brand-1)"/><circle cx="40" cy="22" r="12" fill="var(--brand-1)"/><path d="M50 18 L62 23 L50 28 Z" fill="var(--brand-2)"/><circle cx="43" cy="19" r="2.2" fill="#000"/></svg>`;
 const CHECK = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 6.5 L5 9 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -299,16 +335,37 @@ function cartSummary() {
     <p class="small"><a href="#/basket">Edit basket</a></p>`;
 }
 
+// ---------- "what should we make next?" poll (browser-only in the mockup) ----------
+const POLL_KEY = "duck-poll-vote";
+let pollMine = null;
+try { pollMine = localStorage.getItem(POLL_KEY); } catch {}
+function pollHTML() {
+  const opts = POLL.options.map(o => ({ ...o, votes: o.votes + (pollMine === o.id ? 1 : 0) }));
+  const total = opts.reduce((n, o) => n + o.votes, 0);
+  const pct = o => Math.round(o.votes / total * 100);
+  return `<section class="poll" aria-labelledby="poll-q">
+    <h3 id="poll-q">${POLL.question}</h3>
+    <p class="small muted">${pollMine ? `Thanks, your vote is in. ${total} votes so far.` : POLL.note}</p>
+    <div class="poll-opts">${opts.map(o => pollMine
+      ? `<div class="poll-res ${pollMine === o.id ? "mine" : ""}" style="--p:${pct(o)}%"><span>${o.label}</span><b>${pct(o)}%</b></div>`
+      : `<button class="poll-opt" data-action="poll-vote" data-value="${o.id}">${o.label}</button>`).join("")}
+    </div>
+  </section>`;
+}
+
 // ---------- views ----------
 const VIEWS = {
   start: () => `
     <section class="hero">
       <h1>Your tee, <span class="accent">your way.</span></h1>
       <p class="lede">Pick a tee, choose a colour, add a design, and we print it. You pay up front, and production starts straight away.</p>
+      <div class="car-pills" role="group" aria-label="Show designs">${CAROUSEL_PILLS.map(p => `
+        <button class="car-pill" data-action="car-pill" data-value="${p.id}" aria-pressed="${carPill === p.id}" ${pillEmpty(p.id) ? "disabled" : ""}>${p.label}</button>`).join("")}
+      </div>
       <div class="carousel" tabindex="0" aria-roledescription="carousel" aria-label="Featured designs">
         <div class="car-stage">
-          ${CAROUSEL.map((d, i) => `
-            <div class="car-slide" data-action="car-slide" data-value="${i}">${teeSVG(carHex(i), d.url)}</div>`).join("")}
+          ${carList.map((d, i) => `
+            <div class="car-slide" data-action="car-slide" data-value="${i}">${teeSVG(hexOf(d), d.url)}${badgeOverlay(d)}</div>`).join("")}
           <button class="car-btn prev" data-action="car-step" data-value="-1" aria-label="Previous design">‹</button>
           <button class="car-btn next" data-action="car-step" data-value="1" aria-label="Next design">›</button>
         </div>
@@ -317,7 +374,7 @@ const VIEWS = {
           <span class="small muted" id="car-meta"></span>
           <button class="btn primary" data-action="car-pick">Customise this</button>
         </div>
-        <div class="car-dots">${CAROUSEL.map((d, i) => `
+        <div class="car-dots">${carList.map((d, i) => `
           <button class="car-dot" data-action="car-dot" data-value="${i}" aria-label="Show ${d.name}"></button>`).join("")}
         </div>
       </div>
@@ -340,6 +397,7 @@ const VIEWS = {
         <li><b>2</b>Add to your basket</li>
         <li><b>3</b>Pay, and we start printing</li>
       </ol>
+      ${pollHTML()}
     </section>`,
 
   shop: () => `
@@ -372,6 +430,7 @@ const VIEWS = {
         ${t.available ? "" : '<span class="badge soon">Coming soon</span>'}
       </button>`).join("")}
     </div>
+    ${pollHTML()}
     ${nav(prevOf("tee"), nextOf("tee"), state.tee)}`,
 
   colour: () => `
@@ -700,12 +759,14 @@ const ACTIONS = {
   "car-step": v => carStep(Number(v)),
   "car-dot": v => carTo(Number(v)),
   "car-pick": () => carPick(carIndex()),
+  "car-pill": v => carSetPill(carPill === v ? null : v),
   "car-slide": v => {
     if (car.moved) return; // this "click" was the end of a drag
     const i = Number(v);
     i === carIndex() ? carPick(i) : carTo(i);
   },
   tee: v => { state.tee = v; render(); },
+  "poll-vote": v => { pollMine = v; try { localStorage.setItem(POLL_KEY, v); } catch {} render(); },
   colour: v => { state.colour = v; render(); },
   size: v => { state.size = v; render(); },
   qty: v => { state.qty = clamp(state.qty + Number(v), 1, 50); render(); },
@@ -802,13 +863,13 @@ const CAR_OVERLAP = 0.75;    // how much neighbouring tees tuck behind each othe
 const lerp = (arr, a) => { const i = Math.min(Math.floor(a), arr.length - 2); return arr[i] + (arr[i + 1] - arr[i]) * (a - i); };
 const car = { pos: 0, sp: 100, drag: null, moved: false, prev: [], wheelAcc: 0, wheelLock: 0 };
 const mod = (a, n) => ((a % n) + n) % n;
-const carIndex = () => mod(Math.round(car.pos), CAROUSEL.length);
+const carIndex = () => mod(Math.round(car.pos), carList.length);
 
 // Position every slide from car.pos (a float, so dragging moves smoothly between slides).
 function carLayout(animate = true) {
   const stage = document.querySelector(".car-stage");
   if (!stage) return;
-  const n = CAROUSEL.length;
+  const n = carList.length;
   const slides = stage.querySelectorAll(".car-slide");
   const w = slides[0].offsetWidth;
   // centre-to-centre distances so each tee tucks slightly behind the next; squeezed if the stage is narrow
@@ -832,21 +893,38 @@ function carLayout(animate = true) {
     el.style.pointerEvents = a <= CAR_SIDE + 0.5 ? "" : "none";
     el.classList.toggle("focus", a < 0.5);
   });
-  const d = CAROUSEL[carIndex()];
+  const d = carList[carIndex()];
   document.getElementById("car-name").textContent = d.name;
-  document.getElementById("car-meta").textContent = `Design: ${d.tags} · from ${money(fromPrice(d.price))}`;
+  document.getElementById("car-meta").textContent = carMeta(d);
   document.querySelectorAll(".car-dot").forEach((b, i) => b.classList.toggle("on", i === carIndex()));
 }
 const carGo = target => { car.pos = target; carLayout(true); };
 const carStep = d => carGo(Math.round(car.pos) + d);
 function carTo(i) { // shortest way round the loop
-  const n = CAROUSEL.length;
+  const n = carList.length;
   let diff = mod(i - carIndex(), n);
   if (diff > n / 2) diff -= n;
   carGo(Math.round(car.pos) + diff);
 }
+// Swap the carousel's list (null = default). Rebuilds slides + dots, restarts at the first design.
+function carSetPill(id) {
+  carPill = id;
+  carList = id ? pillList[id]() : CAROUSEL;
+  const stage = document.querySelector(".car-stage");
+  if (!stage) return;
+  stage.querySelectorAll(".car-slide").forEach(el => el.remove());
+  const btn = stage.querySelector(".car-btn.prev");
+  btn.insertAdjacentHTML("beforebegin", carList.map((d, i) => `
+    <div class="car-slide" data-action="car-slide" data-value="${i}">${teeSVG(hexOf(d), d.url)}${badgeOverlay(d)}</div>`).join(""));
+  document.querySelector(".car-dots").innerHTML = carList.map((d, i) => `
+    <button class="car-dot" data-action="car-dot" data-value="${i}" aria-label="Show ${d.name}"></button>`).join("");
+  document.querySelectorAll(".car-pill").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.value === id)));
+  car.pos = 0;
+  car.prev = [];
+  carLayout(false);
+}
 function carPick(i) {
-  const d = CAROUSEL[i];
+  const d = carList[i];
   // keep the colour they saw (still changeable); the back starts plain
   Object.assign(state, draftDefaults(), { path: "catalog", front: catalogSide(d.id), colour: d.showOn });
   go("tee");
@@ -937,6 +1015,7 @@ function shopLoadMore(instant = false) {
       const i = shop.shown + k;
       return `<button class="ig-tile" data-action="shop-pick" data-value="${i}" style="--d:${k * 60}ms" aria-label="${d.name}">
         ${teeSVG(carHex(i), d.url)}
+        ${badgeOverlay(d)}
         <span class="ig-tag"><span>${d.name}</span><b>from ${money(fromPrice(d.price))}</b></span>
         <span class="ig-over"><strong>Customise →</strong></span>
       </button>`;

@@ -87,3 +87,46 @@ const DESIGNS = [
   { id: "d12", name: "Lake", price: 149, showOn: "black", tags: "ocean wave, summer, flowing", category: "Nature",
     svg: `<path d="M6 64 C20 30 46 28 54 50 C46 44 38 52 44 60 C56 72 80 62 94 46 V86 H6 Z" fill="#2EC4B6"/><path d="M6 80 C30 66 60 92 94 72 V92 H6 Z" fill="#FFC629" fill-opacity=".9"/>` },
 ];
+
+// Mock data for the carousel pills. In the real build these come from the database:
+//   sold30  = units sold in the last 30 days   -> "Hot sellers"
+//   added   = date the design went live        -> "Fresh designs"
+//   uploader = approved customer upload (name) -> "Uploaded designs", credited as "by …"
+// Mock dates are relative to today so the demo always has a few "new" designs.
+const daysAgo = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+const NEW_DESIGN_DAYS = 14; // a design counts as "New Design" for this many days after it goes live
+const DESIGN_META = {
+  d01: { sold30: 41, added: daysAgo(124) },
+  d02: { sold30: 12, added: daysAgo(124) },
+  d03: { sold30: 33, added: daysAgo(16), uploader: "Thandi" },
+  d04: { sold30: 58, added: daysAgo(124) },
+  d05: { sold30: 27, added: daysAgo(85) },
+  d06: { sold30: 9,  added: daysAgo(85) },
+  d07: { sold30: 36, added: daysAgo(124) },
+  d08: { sold30: 21, added: daysAgo(8), uploader: "Liam" },
+  d09: { sold30: 44, added: daysAgo(60) },
+  d10: { sold30: 17, added: daysAgo(124) },
+  d11: { sold30: 6,  added: daysAgo(60) },
+  d12: { sold30: 29, added: daysAgo(3), uploader: "Ayesha" },
+};
+DESIGNS.forEach(d => Object.assign(d, DESIGN_META[d.id]));
+
+const CAROUSEL_PILLS = [
+  { id: "hot",      label: "Hot sellers" },
+  { id: "fresh",    label: "Fresh designs" },
+  { id: "uploaded", label: "Uploaded designs" },
+];
+const HOT_BADGE_COUNT = 5; // top N designs by 30-day sales get the "Hot seller" badge. The pill itself is never capped.
+
+// "What should we make next?" poll. Baseline votes are fake for the demo; the real build counts one vote per account.
+const POLL = {
+  question: "We make one tee for now. What should we make next?",
+  note: "Vote for the style you want most.",
+  options: [
+    { id: "hoodie",     label: "Hoodie",         votes: 142 },
+    { id: "longsleeve", label: "Long sleeve tee", votes: 87 },
+    { id: "oversized",  label: "Oversized tee",   votes: 64 },
+    { id: "tank",       label: "Tank top",        votes: 31 },
+    { id: "kids",       label: "Kids sizes",      votes: 48 },
+  ],
+};

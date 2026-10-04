@@ -420,3 +420,38 @@ label.path-card { cursor: pointer; }
   .b-thumbs { width: 100%; max-width: 240px; }
   .header-right .tag { display: none; }
 }
+
+/* carousel pills: Hot sellers / Fresh designs / Uploaded designs */
+.car-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 22px 0 8px; }
+.car-pill { background: var(--surface-2); color: var(--text); border: 2px solid var(--line); border-radius: 999px; padding: 7px 18px; font-size: .9rem; cursor: pointer; transition: background .2s, border-color .2s, color .2s; }
+.car-pill:hover:not(:disabled) { border-color: var(--brand-1); }
+.car-pill[aria-pressed="true"] { background: var(--brand-1); border-color: var(--brand-1); color: #000; font-weight: 700; }
+.car-pill:disabled { opacity: .35; cursor: not-allowed; }
+.car-pill:focus-visible { outline: 2px solid var(--brand-3); outline-offset: 2px; }
+
+/* Comic-book bang stickers ON the tee picture. Sized in container units so they scale with the tee. */
+.car-slide, .ig-tile { container-type: inline-size; }
+.ov { position: absolute; top: 1cqw; left: 0; z-index: 3; display: flex; flex-direction: column; align-items: flex-start; pointer-events: none; }
+.sticker { position: relative; display: grid; place-items: center; width: 54cqw; aspect-ratio: 200 / 120; margin-bottom: -5cqw; transform: rotate(-8deg); filter: drop-shadow(0 1.4cqw 1.6cqw rgba(0, 0, 0, .5)); }
+.sticker:nth-child(2) { transform: rotate(5deg) translateX(3cqw); }
+.sticker:nth-child(3) { transform: rotate(-4deg) translateX(1cqw); }
+.sticker svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sticker .sh { fill: #000; }
+.sticker .fg { stroke: #000; stroke-width: 5; stroke-linejoin: round; }
+.sticker.hot .fg { fill: var(--brand-2); }
+.sticker.new .fg { fill: var(--brand-3); }
+.sticker.user .fg { fill: var(--brand-1); }
+.sticker b { position: relative; font: 400 8.6cqw/0.95 Impact, "Arial Narrow Bold", "Arial Black", sans-serif; letter-spacing: .02em; text-transform: uppercase; text-align: center; color: #000; width: 64%; text-shadow: 0 0 .5cqw rgba(255, 255, 255, .55); }
+.car-slide .ov { top: -1cqw; left: -7cqw; }
+.car-slide .sticker { width: 42cqw; margin-bottom: -4cqw; }
+.car-slide .sticker b { font-size: 6.8cqw; }
+
+/* style poll */
+.poll { margin: 28px auto 0; max-width: 560px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); text-align: left; }
+.poll h3 { margin: 0 0 4px; font-size: 1.1rem; }
+.poll-opts { display: grid; gap: 8px; margin-top: 12px; }
+.poll-opt { background: var(--surface-2); color: var(--text); border: 2px solid var(--line); border-radius: 10px; padding: 10px 14px; text-align: left; font-size: .95rem; cursor: pointer; transition: border-color .2s; }
+.poll-opt:hover, .poll-opt:focus-visible { border-color: var(--brand-1); outline: none; }
+.poll-res { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px; background: linear-gradient(90deg, rgba(255, 198, 41, .28) var(--p), var(--surface-2) var(--p)); border: 2px solid var(--line); font-size: .95rem; }
+.poll-res.mine { border-color: var(--brand-1); }
+.poll-res b { color: var(--brand-1); }
