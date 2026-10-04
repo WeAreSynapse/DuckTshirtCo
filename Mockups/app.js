@@ -8,6 +8,8 @@ const draftDefaults = () => ({
   path: null,      // "catalog" | "upload": how they started (sets the step order)
   tee: "crew",   // preselected: it is the only style for now, so Continue is enabled straight away
   colour: null,
+  fabric: "cotton", // preselected, like the tee style
+  sequin: false,   // premium sequin finish, per printed side
   size: null,
   qty: 1,
   front: null,
@@ -132,9 +134,10 @@ function teePair(it, cls = "", always = false) {
 // An "item" is a basket entry, or the tee currently being designed (draft()).
 const cloneSide = s => s && { ...s, place: { ...s.place } };
 const draft = () => ({
-  path: state.path, tee: state.tee, colour: state.colour, size: state.size, qty: state.qty,
+  path: state.path, tee: state.tee, colour: state.colour, fabric: state.fabric, sequin: state.sequin, size: state.size, qty: state.qty,
   front: cloneSide(state.front), back: cloneSide(state.back),
 });
+const fabricOf = it => FABRICS.find(f => f.id === it.fabric);
 const colourOf = it => COLOURS.find(c => c.id === it.colour);
 const sideName = side => (side.kind === "catalog" ? designById(side.designId).name : "Your design");
 const itemTitle = it => {
@@ -165,14 +168,17 @@ function sideLines(side, where) {
     { label: "Custom design fee", value: "artwork check & setup", price: U.customFee, sub: true },
   ];
 }
+const sequinSides = it => [it.front, it.back].filter(Boolean).length;
 function priceLines(it) {
-  const t = TEES.find(x => x.id === it.tee), c = colourOf(it), s = SIZES.find(x => x.id === it.size);
+  const t = TEES.find(x => x.id === it.tee), c = colourOf(it), f = fabricOf(it), s = SIZES.find(x => x.id === it.size);
   return [
     { label: "Style", value: t?.name, price: t?.price },
     { label: "Colour", value: c?.name, price: c?.price },
+    { label: "Fabric", value: f?.name, price: f?.price },
     { label: "Size", value: s?.id, price: s?.price },
     ...sideLines(it.front, "Front"),
     ...sideLines(it.back, "Back"),
+    ...(it.sequin ? [{ label: SEQUIN.name, value: sequinSides(it) === 2 ? "front + back" : "per printed side", price: SEQUIN.price * sequinSides(it) }] : []),
   ];
 }
 const sumLines = lines => lines.reduce((n, l) => n + (l.price ?? 0), 0);
@@ -186,7 +192,7 @@ const shippingText = () => (PRICES.shipping ? money(PRICES.shipping) : "Free");
 
 // Cheapest possible tee for a given print price, for "from R…" labels.
 const minPrice = arr => Math.min(...arr.map(x => x.price));
-const fromPrice = printPrice => minPrice(TEES.filter(t => t.available)) + minPrice(COLOURS) + minPrice(SIZES) + printPrice;
+const fromPrice = printPrice => minPrice(TEES.filter(t => t.available)) + minPrice(COLOURS) + minPrice(FABRICS) + minPrice(SIZES) + printPrice;
 const uploadFrom = () => fromPrice(UPLOAD_PRICING.base + UPLOAD_PRICING.customFee); // simplest artwork, all tiers at 0
 
 const linesHTML = lines => `<dl class="breakdown">${lines.map(l => `
@@ -237,12 +243,12 @@ function analyseImage(img) {
 // ---------- routing & progress ----------
 // Each start point has its own step order. Checkout is separate: basket → details → payment.
 const FLOWS = {
-  catalog: ["tee", "colour", "design", "size"],
-  upload: ["design", "colour", "size"], // only one tee style for now, so upload goes straight to the studio
+  catalog: ["tee", "colour", "fabric", "design", "size"],
+  upload: ["design", "colour", "fabric", "size"], // only one tee style for now, so upload goes straight to the studio
 };
 const CHECKOUT = ["basket", "details", "payment"];
-const STEP_LABEL = { tee: "T-shirt", colour: "Colour", design: "Design", size: "Size", basket: "Basket", details: "Details", payment: "Payment" };
-const STEP_DONE = { tee: () => state.tee, colour: () => state.colour, design: () => state.front || state.back, size: () => state.size };
+const STEP_LABEL = { tee: "T-shirt", colour: "Colour", fabric: "Fabric", design: "Design", size: "Size", basket: "Basket", details: "Details", payment: "Payment" };
+const STEP_DONE = { tee: () => state.tee, colour: () => state.colour, fabric: () => state.fabric, design: () => state.front || state.back, size: () => state.size };
 const flow = () => FLOWS[state.path];
 const firstOpen = () => flow().find(s => !STEP_DONE[s]()) || "size"; // first unfinished step
 const nextOf = r => flow()[flow().indexOf(r) + 1];
@@ -442,6 +448,25 @@ const VIEWS = {
       </button>`).join("")}
     </div>
     ${nav(prevOf("colour"), nextOf("colour"), state.colour)}`,
+
+  fabric: () => `
+    <h2>Pick a fabric</h2>
+    <div class="grid tees">${FABRICS.map(f => `
+      <button class="card ${state.fabric === f.id ? "selected" : ""}" data-action="fabric" data-value="${f.id}">
+        <strong>${f.name}</strong>
+        <span class="small muted">${f.blurb}</span>
+        <span class="opt-price">${plusText(f.price)}</span>
+      </button>`).join("")}
+    </div>
+    <h3>Finish</h3>
+    <div class="grid tees">
+      <button class="card ${state.sequin ? "selected" : ""}" data-action="sequin">
+        <strong>${SEQUIN.name}</strong>
+        <span class="small muted">${SEQUIN.blurb}</span>
+        <span class="opt-price">+${money(SEQUIN.price)} per printed side</span>
+      </button>
+    </div>
+    ${nav(prevOf("fabric"), nextOf("fabric"), state.fabric)}`,
 
   design: () => studioView(),
 
@@ -768,6 +793,8 @@ const ACTIONS = {
   tee: v => { state.tee = v; render(); },
   "poll-vote": v => { pollMine = v; try { localStorage.setItem(POLL_KEY, v); } catch {} render(); },
   colour: v => { state.colour = v; render(); },
+  fabric: v => { state.fabric = v; render(); },
+  sequin: () => { state.sequin = !state.sequin; render(); },
   size: v => { state.size = v; render(); },
   qty: v => { state.qty = clamp(state.qty + Number(v), 1, 50); render(); },
   go: (v, el) => go(el.dataset.to),
@@ -802,7 +829,7 @@ const ACTIONS = {
   "cart-edit": v => {
     const it = state.cart.find(x => x.id === Number(v));
     Object.assign(state, draftDefaults(), {
-      path: it.path, tee: it.tee, colour: it.colour, size: it.size, qty: it.qty,
+      path: it.path, tee: it.tee, colour: it.colour, fabric: it.fabric, sequin: it.sequin, size: it.size, qty: it.qty,
       front: cloneSide(it.front), back: cloneSide(it.back), editing: it.id,
     });
     go(flow()[0]);

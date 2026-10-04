@@ -52,6 +52,17 @@ const COLOURS = [
   { id: "lime", name: "Lime", hex: "#9acd32", price: 20 },
 ];
 
+const FABRICS = [
+  { id: "cotton", name: "Classic Cotton", blurb: "100% combed cotton, 180gsm.", price: 0 },
+  { id: "organic", name: "Organic Cotton", blurb: "Certified organic, soft hand-feel.", price: 30 },
+  { id: "heavy", name: "Heavyweight Cotton", blurb: "240gsm, boxy and durable.", price: 40 },
+  { id: "triblend", name: "Tri-blend", blurb: "Cotton, polyester and rayon: light and drapey.", price: 50 },
+  { id: "bamboo", name: "Bamboo Blend", blurb: "Silky, breathable, naturally cool.", price: 60 },
+];
+
+// Premium print finish, charged per printed side.
+const SEQUIN = { name: "Sequin design", blurb: "Your design built from reversible sequins that flip colour when brushed.", price: 150 };
+
 const SIZES = [
   { id: "S", price: 0 },
   { id: "M", price: 0 },
