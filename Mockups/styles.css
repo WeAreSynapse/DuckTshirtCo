@@ -242,8 +242,10 @@ button:disabled { cursor: not-allowed; }
   .layout { grid-template-columns: minmax(0, 1fr); }
   .summary { position: static; order: -1; }
   .preview { max-width: 260px; margin: 0 auto; }
-  .stepper span:not(.step) { display: none; }
-  .stepper li.current span { display: inline; }
+  .stepper { gap: 4px; overflow-x: visible; }
+  .stepper li { min-width: 0; }
+  .stepper a, .stepper .step { flex-direction: column; justify-content: center; gap: 4px; height: 58px; padding: 6px 2px; font-size: .68rem; text-align: center; }
+  .stepper b { margin-right: 0; }
   .done-card { flex-direction: column; }
   .form { grid-template-columns: 1fr; }
   .nav { flex-direction: column-reverse; }
