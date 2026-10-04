@@ -319,9 +319,13 @@ label.path-card { cursor: pointer; }
 .studio-cta .btn { box-shadow: 0 8px 30px rgba(0, 0, 0, .5); cursor: pointer; }
 .btn.solid { background: var(--surface-2); }
 #st-box { cursor: move; }
-.st-handle { fill: var(--brand-1); stroke: #000; stroke-width: 1.5; }
-#st-rot { cursor: grab; }
-#st-scale { cursor: nwse-resize; }
+.st-handle { fill: #fff; stroke: #000; stroke-width: 1; pointer-events: none; }
+.st-hit, .st-rotz { fill: transparent; }
+.st-rotz { cursor: grab; }
+[data-h="nw"], [data-h="se"] { cursor: nwse-resize; }
+[data-h="ne"], [data-h="sw"] { cursor: nesw-resize; }
+[data-h="n"], [data-h="s"] { cursor: ns-resize; }
+[data-h="e"], [data-h="w"] { cursor: ew-resize; }
 .studio-canvas.dragging, .studio-canvas.dragging * { cursor: grabbing; }
 .studio-tools { position: sticky; top: 16px; }
 .st-file { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: var(--surface-2); margin-bottom: 18px; }

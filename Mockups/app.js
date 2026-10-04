@@ -3,7 +3,7 @@
 // A "side" is what's printed on the front or back of a tee:
 //   { kind: "catalog", designId, aspect, place }  or
 //   { kind: "upload", name, url, aspect, stats: { colours, detail, coverage }, place }
-// place = { x, y (offset from print-area centre, as a fraction of its size), s (width, fraction of print area), r (degrees) }
+// place = { x, y (offset from print-area centre, as a fraction of its size), s (width, fraction of print area), k (vertical stretch), r (degrees) }
 const draftDefaults = () => ({
   path: null,      // "catalog" | "upload": how they started (sets the step order)
   tee: "crew",   // preselected: it is the only style for now, so Continue is enabled straight away
@@ -96,7 +96,7 @@ const sideArt = side => side && { url: sideUrl(side), aspect: side.aspect, ...si
 
 // Where a placed design sits on the tee.
 function artGeom(a) {
-  const w = a.s * PA.w, h = w / a.aspect;
+  const w = a.s * PA.w, h = w / a.aspect * (a.k ?? 1); // k: vertical stretch (1 = natural proportions)
   const cx = PA.x + PA.w / 2 + a.x * PA.w, cy = PA.y + PA.h / 2 + a.y * PA.h;
   return { w, h, cx, cy, x: cx - w / 2, y: cy - h / 2 };
 }
@@ -575,8 +575,11 @@ function field(key, label, placeholder, type = "text", cls = "") {
 const FILE_INPUT = `<input type="file" accept="image/png,image/jpeg,image/svg+xml" data-upload hidden>`;
 const cur = () => state[state.side];
 const sideLabel = s => (s === "front" ? "Front" : "Back");
-const defaultPlace = aspect => ({ x: 0, y: 0, s: Math.min(0.8, 0.96 * aspect), r: 0 }); // fits inside the print area
+const defaultPlace = aspect => ({ x: 0, y: 0, s: Math.min(0.8, 0.96 * aspect), k: 1, r: 0 }); // fits inside the print area
 const catalogSide = id => ({ kind: "catalog", designId: id, aspect: 1, place: defaultPlace(1) });
+
+// Free-transform handles: [name, x side, y side] on the artwork's own box (-1 / 0 / 1 from its centre).
+const HANDLES = [["nw", -1, -1], ["n", 0, -1], ["ne", 1, -1], ["e", 1, 0], ["se", 1, 1], ["s", 0, 1], ["sw", -1, 1], ["w", -1, 0]];
 
 function studioView() {
   const side = cur(), c = colour(), back = state.side === "back";
@@ -595,10 +598,11 @@ function studioView() {
               <clipPath id="studio-clip"><rect x="${PA.x}" y="${PA.y}" width="${PA.w}" height="${PA.h}"/></clipPath>
               <g clip-path="url(#studio-clip)"><image id="st-img" href="${sideUrl(side)}" preserveAspectRatio="none"/></g>
               <g id="st-sel">
-                <rect id="st-box" fill="transparent" stroke="#FFC629" stroke-width="1" stroke-dasharray="3 2"/>
-                <line id="st-stem" stroke="#FFC629" stroke-width="1"/>
-                <circle id="st-rot" class="st-handle" r="5"/>
-                <circle id="st-scale" class="st-handle" r="5"/>
+                ${HANDLES.filter(h => h[1] && h[2]).map(h => `<circle class="st-rotz" data-rotz="${h[0]}" r="18"/>`).join("")}
+                <rect id="st-box" fill="transparent" stroke="#FFC629" stroke-width="1"/>
+                ${HANDLES.map(h => `<g class="st-hnd" data-h="${h[0]}">
+                  <rect class="st-hit" x="-8" y="-8" width="16" height="16"/>
+                  <rect class="st-handle" x="-3.5" y="-3.5" width="7" height="7"/></g>`).join("")}
               </g>` : `
               <text x="150" y="104" text-anchor="middle" font-size="9" fill="#777" font-family="system-ui, sans-serif">${sideLabel(state.side)} print area</text>`}
           </svg>
@@ -647,7 +651,7 @@ function sideTools(side) {
       <label class="btn ghost sm">${FILE_INPUT}${upload ? "Replace image" : "Upload instead"}</label>
       <button class="btn ghost sm" data-action="side-remove">Remove</button>
     </div>
-    <p class="small muted">Drag to move. Drag the corner handle to resize and the top handle to rotate. Anything outside the dashed print area won't be printed.</p>
+    <p class="small muted">Drag inside the box to move. Drag a corner to resize, an edge to stretch, and just outside a corner to rotate. Hold Shift to stretch from a corner or snap rotation to 15°, and Alt to scale from the centre. Anything outside the dashed print area won't be printed.</p>
     <h3 class="st-price-title">${sideLabel(state.side)} print price</h3>
     <div id="st-side-price"></div>
     ${upload ? `<p class="small muted">Estimated automatically from your artwork's print size, colours and detail. It updates as you resize.</p>` : ""}`;
@@ -676,9 +680,12 @@ function studioUpdate() {
   set(img, { x: g.x, y: g.y, width: g.w, height: g.h, transform: rot });
   set(document.getElementById("st-sel"), { transform: rot });
   set(document.getElementById("st-box"), { x: g.x, y: g.y, width: g.w, height: g.h });
-  set(document.getElementById("st-stem"), { x1: g.cx, y1: g.y, x2: g.cx, y2: g.y - 16 });
-  set(document.getElementById("st-rot"), { cx: g.cx, cy: g.y - 16 });
-  set(document.getElementById("st-scale"), { cx: g.x + g.w, cy: g.y + g.h });
+  HANDLES.forEach(([n, sx, sy]) => {
+    const hx = g.cx + sx * g.w / 2, hy = g.cy + sy * g.h / 2;
+    set(document.querySelector(`[data-h="${n}"]`), { transform: `translate(${hx} ${hy})` });
+    const rz = document.querySelector(`[data-rotz="${n}"]`);
+    if (rz) set(rz, { cx: hx, cy: hy });
+  });
   const size = Math.round(p.s * 100), deg = Math.round(p.r);
   const sizeIn = document.querySelector('[data-place="s"]'), rotIn = document.querySelector('[data-place="r"]');
   if (sizeIn) { sizeIn.value = size; rotIn.value = deg; }
@@ -694,14 +701,42 @@ function svgPoint(e) {
   return new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
 }
 document.addEventListener("pointerdown", e => {
-  const t = e.target.closest("#st-box, #st-rot, #st-scale");
+  const t = e.target.closest("[data-h], [data-rotz], #st-box");
   if (!t || !cur()) return;
   e.preventDefault();
   const side = cur(), p = svgPoint(e), g = artGeom({ aspect: side.aspect, ...side.place });
-  studio.mode = t.id === "st-rot" ? "rotate" : t.id === "st-scale" ? "scale" : "move";
-  studio.start = { p, g, place: { ...side.place }, d0: Math.hypot(p.x - g.cx, p.y - g.cy) || 1 };
+  studio.mode = t.dataset.h ? "scale" : t.dataset.rotz ? "rotate" : "move";
+  studio.handle = t.dataset.h ? HANDLES.find(h => h[0] === t.dataset.h) : null;
+  studio.start = { p, g, place: { ...side.place }, a0: Math.atan2(p.y - g.cy, p.x - g.cx) };
   document.getElementById("studio-canvas").classList.add("dragging");
 });
+
+// Resize like Photoshop's Free Transform: work in the artwork's own (unrotated) frame, keep the opposite
+// corner/edge fixed (or the centre with Alt). Corners keep proportions unless Shift; edges stretch one way.
+function studioScale(e, s, pl) {
+  const [, sx, sy] = studio.handle, g = s.g, rad = s.place.r * Math.PI / 180, cos = Math.cos(rad), sin = Math.sin(rad);
+  const p = svgPoint(e), dx = p.x - g.cx, dy = p.y - g.cy;
+  const lx = dx * cos + dy * sin, ly = -dx * sin + dy * cos; // pointer relative to the artwork centre, unrotated
+  const hw = g.w / 2, hh = g.h / 2, mid = e.altKey, m = mid ? 2 : 1;
+  const ax = mid ? 0 : -sx * hw, ay = mid ? 0 : -sy * hh; // the point that stays put
+  const minW = 0.05 * PA.w, minH = 0.05 * PA.h, maxW = 1.2 * PA.w, maxH = 1.5 * PA.h;
+  let w = g.w, h = g.h;
+  if (sx && sy && !e.shiftKey) { // proportional
+    const vx = sx * (3 - m) * hw, vy = sy * (3 - m) * hh; // fixed point -> dragged corner: a full side, or half with Alt
+    const f = clamp(((lx - ax) * vx + (ly - ay) * vy) / (vx * vx + vy * vy),
+      Math.max(minW / g.w, minH / g.h), Math.min(maxW / g.w, maxH / g.h));
+    w = g.w * f; h = g.h * f;
+  } else {
+    if (sx) w = clamp(m * sx * (lx - ax), minW, maxW);
+    if (sy) h = clamp(m * sy * (ly - ay), minH, maxH);
+  }
+  const cxl = mid || !sx ? 0 : ax + sx * w / 2, cyl = mid || !sy ? 0 : ay + sy * h / 2; // new centre, unrotated frame
+  const cx = g.cx + cxl * cos - cyl * sin, cy = g.cy + cxl * sin + cyl * cos;
+  pl.x = clamp((cx - (PA.x + PA.w / 2)) / PA.w, -0.5, 0.5);
+  pl.y = clamp((cy - (PA.y + PA.h / 2)) / PA.h, -0.5, 0.5);
+  pl.s = w / PA.w;
+  pl.k = h * cur().aspect / w;
+}
 window.addEventListener("pointermove", e => {
   if (!studio.mode) return;
   const p = svgPoint(e), s = studio.start, pl = cur().place;
@@ -709,11 +744,11 @@ window.addEventListener("pointermove", e => {
     pl.x = clamp(s.place.x + (p.x - s.p.x) / PA.w, -0.5, 0.5); // centre stays inside the print area
     pl.y = clamp(s.place.y + (p.y - s.p.y) / PA.h, -0.5, 0.5);
   } else if (studio.mode === "scale") {
-    pl.s = clamp(s.place.s * Math.hypot(p.x - s.g.cx, p.y - s.g.cy) / s.d0, 0.1, 1.2);
+    studioScale(e, s, pl);
   } else {
-    const a = Math.atan2(p.y - s.g.cy, p.x - s.g.cx) * 180 / Math.PI + 90;
+    const a = s.place.r + (Math.atan2(p.y - s.g.cy, p.x - s.g.cx) - s.a0) * 180 / Math.PI;
     const snapped = Math.round(a / 15) * 15;
-    pl.r = normDeg(Math.abs(a - snapped) < 4 ? snapped : a); // gentle snap to 15° steps
+    pl.r = normDeg(e.shiftKey || Math.abs(a - snapped) < 4 ? snapped : a); // Shift snaps to 15°, otherwise a gentle snap
   }
   studioUpdate();
 });
