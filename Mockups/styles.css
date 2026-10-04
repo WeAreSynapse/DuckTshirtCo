@@ -423,7 +423,7 @@ label.path-card { cursor: pointer; }
   .header-right .tag { display: none; }
 }
 
-/* carousel pills: Hot sellers / Fresh designs / Uploaded designs */
+/* carousel pills: Hot sellers / Fresh designs / User's Designs */
 .car-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 22px 0 8px; }
 .car-pill { background: var(--surface-2); color: var(--text); border: 2px solid var(--line); border-radius: 999px; padding: 7px 18px; font-size: .9rem; cursor: pointer; transition: background .2s, border-color .2s, color .2s; }
 .car-pill:hover:not(:disabled) { border-color: var(--brand-1); }

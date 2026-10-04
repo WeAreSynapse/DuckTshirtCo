@@ -91,7 +91,7 @@ const DESIGNS = [
 // Mock data for the carousel pills. In the real build these come from the database:
 //   sold30  = units sold in the last 30 days   -> "Hot sellers"
 //   added   = date the design went live        -> "Fresh designs"
-//   uploader = approved customer upload (name) -> "Uploaded designs", credited as "by …"
+//   uploader = approved customer upload (name) -> "User's Designs", credited as "by …"
 // Mock dates are relative to today so the demo always has a few "new" designs.
 const daysAgo = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
 const NEW_DESIGN_DAYS = 14; // a design counts as "New Design" for this many days after it goes live
@@ -114,7 +114,7 @@ DESIGNS.forEach(d => Object.assign(d, DESIGN_META[d.id]));
 const CAROUSEL_PILLS = [
   { id: "hot",      label: "Hot sellers" },
   { id: "fresh",    label: "Fresh designs" },
-  { id: "uploaded", label: "Uploaded designs" },
+  { id: "uploaded", label: "User's Designs" },
 ];
 const HOT_BADGE_COUNT = 5; // top N designs by 30-day sales get the "Hot seller" badge. The pill itself is never capped.
 

@@ -66,7 +66,7 @@ const sticker = (cls, text) => `<span class="sticker ${cls}"><svg viewBox="0 0 2
 const badgeOverlay = d => {
   const b = (isHot(d) ? sticker("hot", "Hot Seller!") : "") +
             (isNew(d) ? sticker("new", "New Design") : "") +
-            (d.uploader ? sticker("user", "User Designs") : "");
+            (d.uploader ? sticker("user", "User's Designs") : "");
   return b ? `<span class="ov">${b}</span>` : "";
 };
 const pillEmpty = id => pillList[id]().length === 0;
