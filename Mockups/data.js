@@ -107,6 +107,9 @@ const DESIGNS = [
     svg: `<text x="50" y="52" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="30" fill="${W}">BRA<tspan fill="${Y}">AI</tspan></text><text x="50" y="72" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="8" fill="${T}" textLength="86" lengthAdjust="spacingAndGlyphs">THE ONLY AI I TRUST</text>` },
   { id: "d17", name: "Paddle", price: 149, showOn: "navy", tags: "calm duck, paddling underneath, slogan", category: "Humour",
     svg: slogan([["CALM ON THE SURFACE", W, 9], ["PADDLING LIKE HELL", Y, 11], ["UNDERNEATH", O, 14]]) },
+  { id: "d18", name: "JedAI", price: 149, showOn: "black", tags: "revenge of the JedAI, slogan, sci-fi parody", category: "Humour",
+    flag: "Trademark risk: parody of a Lucasfilm title. Clear or drop before launch.", // admin-only note; never shown to shoppers
+    svg: slogan([["REVENGE OF", W, 12], ["THE", W, 12], ["JedAI", Y, 26]]) },
 ];
 
 // Mock data for the carousel pills. In the real build these come from the database:
@@ -134,6 +137,7 @@ const DESIGN_META = {
   d15: { sold30: 35, added: daysAgo(6) },
   d16: { sold30: 40, added: daysAgo(4) },
   d17: { sold30: 15, added: daysAgo(30) },
+  d18: { sold30: 22, added: daysAgo(0) },
 };
 DESIGNS.forEach(d => Object.assign(d, DESIGN_META[d.id]));
 
