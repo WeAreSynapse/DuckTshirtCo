@@ -54,12 +54,23 @@ const SIZES = [
   { id: "3XL", price: 60 },
 ];
 
-const CATEGORIES = ["Abstract", "Type", "Retro", "Nature"];
+const CATEGORIES = ["Abstract", "Type", "Retro", "Nature", "Humour"];
 
 // Placeholder artwork: simple SVGs on a 100×100 canvas with transparent backgrounds.
 // `tags` is the short design description shown as "Design: …" next to the price.
 // `price` is what the design adds to the tee, per side it's printed on.
 // `showOn` is the tee colour (from COLOURS) the design is displayed on in the carousel and shop grid.
+// Slogan artwork: rows of [text, fill, font size], centred as a block. textLength keeps each line inside the print area.
+const slogan = rows => {
+  const total = rows.reduce((n, r) => n + r[2] * 1.3, 0);
+  let y = 50 - total / 2;
+  return rows.map(([t, fill, size]) => {
+    y += size * 1.3;
+    return `<text x="50" y="${(y - size * 0.3).toFixed(1)}" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="${size}" fill="${fill}" textLength="${Math.min(94, Math.round(t.length * size * 0.66))}" lengthAdjust="spacingAndGlyphs">${t}</text>`;
+  }).join("");
+};
+const Y = "#FFC629", W = "#F4F1EA", O = "#FF6B2C", T = "#2EC4B6";
+
 const DESIGNS = [
   { id: "d01", name: "Orbit", price: 149, showOn: "black", tags: "overlapping circles, bold, colourful", category: "Abstract", featured: true,
     svg: `<circle cx="38" cy="40" r="24" fill="#FFC629"/><circle cx="62" cy="40" r="24" fill="#2EC4B6" fill-opacity=".85"/><circle cx="50" cy="62" r="24" fill="#FF6B2C" fill-opacity=".85"/>` },
@@ -86,6 +97,16 @@ const DESIGNS = [
     svg: `<path d="M50 8 C82 28 82 70 50 92 C18 70 18 28 50 8 Z" fill="#2EC4B6"/><path d="M50 18 V88 M50 40 L66 30 M50 56 L34 46 M50 70 L64 62" stroke="#0b3d38" stroke-width="3" fill="none" stroke-linecap="round"/>` },
   { id: "d12", name: "Lake", price: 149, showOn: "black", tags: "ocean wave, summer, flowing", category: "Nature",
     svg: `<path d="M6 64 C20 30 46 28 54 50 C46 44 38 52 44 60 C56 72 80 62 94 46 V86 H6 Z" fill="#2EC4B6"/><path d="M6 80 C30 66 60 92 94 72 V92 H6 Z" fill="#FFC629" fill-opacity=".9"/>` },
+  { id: "d13", name: "Replaced", price: 149, showOn: "black", tags: "replaced by AI, slogan, dark humour", category: "Humour", featured: true,
+    svg: slogan([["I GOT REPLACED BY AI", W, 9], ["AND ALL I GOT WAS", W, 9], ["THIS SHITTY", O, 13], ["TWSH?IRT", Y, 20]]) },
+  { id: "d14", name: "Soon", price: 149, showOn: "navy", tags: "soon to be replaced by AI, slogan", category: "Humour",
+    svg: slogan([["SOON TO BE", W, 14], ["REPLACED", Y, 22], ["BY AI", O, 22]]) },
+  { id: "d15", name: "Coffee", price: 149, showOn: "black", tags: "AI won't spit in your coffee, slogan", category: "Humour", featured: true,
+    svg: slogan([["I UNDERSTAND BOSS, BUT", W, 8], ["AI AINT GONNA SPIT IN", Y, 10], ["YOUR COFFEE EVERY", Y, 10], ["MORNING LIKE I DID", O, 10]]) },
+  { id: "d16", name: "BraAI", price: 149, showOn: "black", tags: "BraAI, the only AI I trust, slogan", category: "Humour", featured: true,
+    svg: `<text x="50" y="52" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="30" fill="${W}">BRA<tspan fill="${Y}">AI</tspan></text><text x="50" y="72" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="8" fill="${T}" textLength="86" lengthAdjust="spacingAndGlyphs">THE ONLY AI I TRUST</text>` },
+  { id: "d17", name: "Paddle", price: 149, showOn: "navy", tags: "calm duck, paddling underneath, slogan", category: "Humour",
+    svg: slogan([["CALM ON THE SURFACE", W, 9], ["PADDLING LIKE HELL", Y, 11], ["UNDERNEATH", O, 14]]) },
 ];
 
 // Mock data for the carousel pills. In the real build these come from the database:
@@ -108,6 +129,11 @@ const DESIGN_META = {
   d10: { sold30: 17, added: daysAgo(124) },
   d11: { sold30: 6,  added: daysAgo(60) },
   d12: { sold30: 29, added: daysAgo(3), uploader: "Ayesha" },
+  d13: { sold30: 24, added: daysAgo(10) },
+  d14: { sold30: 18, added: daysAgo(10) },
+  d15: { sold30: 35, added: daysAgo(6) },
+  d16: { sold30: 40, added: daysAgo(4) },
+  d17: { sold30: 15, added: daysAgo(30) },
 };
 DESIGNS.forEach(d => Object.assign(d, DESIGN_META[d.id]));
 
