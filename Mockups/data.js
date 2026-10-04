@@ -43,25 +43,7 @@ const COLOURS = [
   { id: "grey", name: "Heather Grey", hex: "#8b8e93", price: 10 },
   { id: "navy", name: "Navy", hex: "#1f2a44", price: 20 },
   { id: "red", name: "Red", hex: "#b8322a", price: 20 },
-  { id: "orange", name: "Orange", hex: "#e8701a", price: 20 },
-  { id: "blue", name: "Royal Blue", hex: "#2455b8", price: 20 },
-  { id: "sky", name: "Sky Blue", hex: "#6cb4ee", price: 20 },
-  { id: "cyan", name: "Cyan", hex: "#1fb5c9", price: 20 },
-  { id: "yellow", name: "Yellow", hex: "#e8c42a", price: 20 },
-  { id: "green", name: "Green", hex: "#2f8a4a", price: 20 },
-  { id: "lime", name: "Lime", hex: "#9acd32", price: 20 },
 ];
-
-const FABRICS = [
-  { id: "cotton", name: "Classic Cotton", blurb: "100% combed cotton, 180gsm.", price: 0 },
-  { id: "organic", name: "Organic Cotton", blurb: "Certified organic, soft hand-feel.", price: 30 },
-  { id: "heavy", name: "Heavyweight Cotton", blurb: "240gsm, boxy and durable.", price: 40 },
-  { id: "triblend", name: "Tri-blend", blurb: "Cotton, polyester and rayon: light and drapey.", price: 50 },
-  { id: "bamboo", name: "Bamboo Blend", blurb: "Silky, breathable, naturally cool.", price: 60 },
-];
-
-// Premium print finish, charged per printed side.
-const SEQUIN = { name: "Sequin design", blurb: "Your design built from reversible sequins that flip colour when brushed.", price: 150 };
 
 const SIZES = [
   { id: "S", price: 0 },
@@ -69,7 +51,6 @@ const SIZES = [
   { id: "L", price: 0 },
   { id: "XL", price: 0 },
   { id: "2XL", price: 20 },
-  { id: "3XL", price: 30 },
 ];
 
 const CATEGORIES = ["Abstract", "Type", "Retro", "Nature"];
