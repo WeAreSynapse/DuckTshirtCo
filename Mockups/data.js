@@ -43,6 +43,9 @@ const COLOURS = [
   { id: "grey", name: "Heather Grey", hex: "#8b8e93", price: 10 },
   { id: "navy", name: "Navy", hex: "#1f2a44", price: 20 },
   { id: "red", name: "Red", hex: "#b8322a", price: 20 },
+  { id: "blue", name: "Royal Blue", hex: "#2455b8", price: 20 },
+  { id: "yellow", name: "Yellow", hex: "#e8c42a", price: 20 },
+  { id: "green", name: "Green", hex: "#2f8a4a", price: 20 },
 ];
 
 const SIZES = [
