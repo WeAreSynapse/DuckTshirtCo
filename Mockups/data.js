@@ -16,13 +16,13 @@ const UPLOAD_PRICING = {
   customFee: 100, // artwork check & setup, per uploaded side
   printSize: [    // share of the print area covered by ink, at the size the customer placed it
     { upTo: 0.25, label: "Small", price: 0 },
-    { upTo: 0.6, label: "Medium", price: 30 },
-    { upTo: Infinity, label: "Large", price: 60 },
+    { upTo: 0.6, label: "Medium", price: 20 },
+    { upTo: Infinity, label: "Large", price: 40 },
   ],
   colours: [      // distinct colours detected
     { upTo: 2, price: 0 },
-    { upTo: 5, price: 25 },
-    { upTo: Infinity, price: 50 },
+    { upTo: 5, price: 20 },
+    { upTo: Infinity, price: 40 },
   ],
   detail: [       // edge density: simple shapes → fine linework / photos
     { upTo: 0.06, label: "Simple", price: 0 },
