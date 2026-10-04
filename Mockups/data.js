@@ -49,7 +49,7 @@ const SIZES = [
   { id: "S", price: 0 },
   { id: "M", price: 0 },
   { id: "L", price: 0 },
-  { id: "XL", price: 0 },
+  { id: "XL", price: 10 },
   { id: "2XL", price: 20 },
   { id: "3XL", price: 30 },
 ];
